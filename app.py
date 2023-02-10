@@ -29,9 +29,11 @@ response = requests.get(
 data = response.json()
 rates = data[0]['rates']
 
-# porownanie 2 dict
+# porownanie 2 dict, rates[0] blad
 print(rates[0])
 print(rates[1])
+
+# porownanie 2 dict, rates[4] blad
 print(rates[3])
 print(rates[4])
 
