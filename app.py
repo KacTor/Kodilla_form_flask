@@ -18,30 +18,55 @@ def form_view():
 if __name__ == "__main__":
     app.run(debug=True)
 '''
-
-from pprint import pprint
 import requests
 import csv
+from flask import Flask, render_template, request, redirect
 
+app = Flask(__name__)
 
 response = requests.get(
     'http://api.nbp.pl/api/exchangerates/tables/C?format=json')
 data = response.json()
 rates = data[0]['rates']
 
-# porownanie 2 dict, rates[0] blad
-print(rates[0])
-print(rates[1])
+# emergency plan :3, another way, with csvwriter
+'''with open('rates.csv', 'w', newline='', encoding='UTF8') as ratesfile:
+    writer = csv.writer(ratesfile, delimiter=';')
 
-# porownanie 2 dict, rates[4] blad
-print(rates[3])
-print(rates[4])
+    writer.writerow(rates[0].keys())
+    for dict in rates:        
+        writer.writerow(dict.values())
+'''
 
-
-with open('rates.csv', 'w', newline='') as ratesfile:
-    fieldnames = ['currency', 'code', 'bid', 'ask']
-    writer = csv.DictWriter(ratesfile, fieldnames=fieldnames, delimiter=';')
+with open('rates.csv', 'w', newline='', encoding='UTF8') as ratesfile:
+    fieldname = ['currency', 'code', 'bid', 'ask']
+    writer = csv.DictWriter(ratesfile, fieldnames=fieldname, delimiter=';')
 
     writer.writeheader()
-    writer.writerow(rates[3])
-    writer.writerow(rates[4])
+
+    for dict in rates:
+        writer.writerow(dict)
+
+
+@app.route("/exchange", methods=["GET", "POST"])
+def exchange():
+    currentCurrencies = []
+    for dict in rates:
+        currentCurrencies.append(dict['code'])
+
+    if request.method == "POST":
+        data = request.form
+        currency = data.get('currency')
+        amountOfCurrency = data.get('amountOfCurrency')
+
+        for dict in rates:
+            if currency == dict['code']:
+                result = round(float(amountOfCurrency) * dict['bid'], 2)
+
+        return render_template('result.html', result=result)
+
+    return render_template('exchange.html', currentCurrencies=currentCurrencies)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
